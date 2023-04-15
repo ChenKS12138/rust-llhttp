@@ -18,7 +18,10 @@ bindgen = { version = "0.59", optional = true }
 env_logger = "0.9"
 log = "0.4"
 pkg-config = "0.3"
+cc="1.0.79"
 
 [features]
 static = []
-gen = ["bindgen"]
+gen=["gen_binding", "gen_source"]
+gen_binding = ["bindgen"]
+gen_source=[]

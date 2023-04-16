@@ -8,6 +8,10 @@ edition = "2018"
 libc = "0.2"
 llhttp-sys = { version = "0.0.1", path = "../llhttp-sys" }
 
+[dev-dependencies]
+anyhow="1.0.70"
+map-macro = "0.2.5"
+
 [features]
 gen = ["llhttp-sys/gen"]
 static = ["llhttp-sys/static"]

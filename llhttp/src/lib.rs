@@ -46,7 +46,7 @@ macro_rules! data_cb_wrapper {
             length: usize,
         ) -> libc::c_int {
             let parser = &mut *(arg1 as *mut llhttp::Parser<$data_type>);
-            let data = std::slice::from_raw_parts(at as *const u8, length);
+            let data = std::slice::from_raw_parts(at as *const u8, length + 1);
             match $func(parser, data) {
                 Ok(_) => 0,
                 Err(_) => -1,
@@ -128,7 +128,13 @@ impl<'a, T> Parser<'a, T> {
 
     #[inline]
     pub fn parse(&mut self, data: &[u8]) -> Error {
-        unsafe { ffi::llhttp_execute(&mut self._llhttp, data.as_ptr() as *const c_char, data.len()) }
+        unsafe {
+            ffi::llhttp_execute(
+                &mut self._llhttp,
+                data.as_ptr() as *const c_char,
+                data.len(),
+            )
+        }
     }
 
     #[inline]
@@ -258,6 +264,7 @@ impl<'a, T> Parser<'a, T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    pub(self) use crate as llhttp;
 
     #[test]
     fn test_method() {
@@ -294,5 +301,126 @@ mod tests {
         parser.parse(payload);
         println!("{:?}", parser.method());
         assert!(matches!(parser.method(), Method::HTTP_GET));
+    }
+
+    #[derive(Default, Debug)]
+    struct TmpStore(pub std::collections::HashMap<String, String>);
+    impl From<*mut ffi::llhttp_t> for &mut TmpStore {
+        fn from(value: *mut ffi::llhttp_t) -> Self {
+            unsafe { ((*value).data as *mut TmpStore).as_mut().unwrap() }
+        }
+    }
+
+    fn on_url(parser: &mut Parser<TmpStore>, data: &[u8]) -> anyhow::Result<()> {
+        let tmp_store = parser.data().unwrap();
+        let data = unsafe { CStr::from_bytes_with_nul_unchecked(data).to_str().unwrap() };
+        let value = tmp_store
+            .0
+            .entry("url".to_string())
+            .or_insert(String::new());
+        let data = value.to_owned() + data;
+        *value = data;
+        Ok(())
+    }
+
+    fn on_header_field(parser: &mut Parser<TmpStore>, data: &[u8]) -> anyhow::Result<()> {
+        let tmp_store = parser.data().unwrap();
+        let data = unsafe { CStr::from_bytes_with_nul_unchecked(data).to_str().unwrap() };
+        let value = tmp_store
+            .0
+            .entry("header_field/".to_string() + &data)
+            .or_insert(String::new());
+
+        let data = value.to_owned() + data;
+        *value = data;
+        Ok(())
+    }
+
+    fn on_header_value(parser: &mut Parser<TmpStore>, data: &[u8]) -> anyhow::Result<()> {
+        let tmp_store = parser.data().unwrap();
+        let data = unsafe { CStr::from_bytes_with_nul_unchecked(data).to_str().unwrap() };
+        let value = tmp_store
+            .0
+            .entry("header_value/".to_string() + &data)
+            .or_insert(String::new());
+
+        let data = value.to_owned() + data;
+        *value = data;
+        Ok(())
+    }
+
+    fn on_body(parser: &mut Parser<TmpStore>, data: &[u8]) -> anyhow::Result<()> {
+        let tmp_store = parser.data().unwrap();
+        let data = unsafe { CStr::from_bytes_with_nul_unchecked(data).to_str().unwrap() };
+        let value = tmp_store
+            .0
+            .entry("body".to_string())
+            .or_insert(String::new());
+
+        let data = value.to_owned() + data;
+        *value = data;
+        Ok(())
+    }
+
+    fn on_message_complete(parser: &mut Parser<TmpStore>) -> anyhow::Result<()> {
+        let tmp_store = parser.data().unwrap();
+        let value = tmp_store
+            .0
+            .entry("on_message_complete".to_string())
+            .or_insert(String::new());
+        *value = "on_message_complete".to_string();
+
+        Ok(())
+    }
+
+    data_cb_wrapper!(on_url_wrapped, on_url, TmpStore);
+    data_cb_wrapper!(on_header_field_warpped, on_header_field, TmpStore);
+    data_cb_wrapper!(on_header_value_wrapped, on_header_value, TmpStore);
+    data_cb_wrapper!(on_body_wrapped, on_body, TmpStore);
+    cb_wrapper!(on_message_complete_wrapped, on_message_complete, TmpStore);
+
+    #[test]
+    fn test_callback() {
+        use map_macro::map;
+        use std::collections::HashMap;
+
+        let mut settings = Settings::new();
+
+        settings.on_url(Some(on_url_wrapped));
+        settings.on_header_field(Some(on_header_field_warpped));
+        settings.on_header_value(Some(on_header_value_wrapped));
+        settings.on_body(Some(on_body_wrapped));
+        settings.on_message_complete(Some(on_message_complete_wrapped));
+
+        let payload = b"POST /user_info HTTP/1.1\r\nHost: localhost:5555\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\nContent-Length: 17\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nusername=cattchen";
+
+        let mut parser = Parser::<TmpStore>::default();
+        parser.init(&settings, Type::HTTP_BOTH);
+        parser.set_data(Some(Box::new(TmpStore::default())));
+
+        parser.parse(payload);
+        let tmp_store = parser.data().unwrap();
+
+        assert!(matches!(parser.method(), Method::HTTP_POST));
+
+        let m: HashMap<String, String> = map! {
+            "header_value/localhost:5555".to_string() => "localhost:5555".to_string(),
+            "header_value/application/x-www-form-urlencoded".to_string()=> "application/x-www-form-urlencoded".to_string(),
+            "header_field/User-Agent".to_string()=> "User-Agent".to_string(),
+            "header_field/Content-Length".to_string()=> "Content-Length".to_string(),
+            "header_value/17".to_string()=> "17".to_string(),
+            "url".to_string()=> "/user_info".to_string(),
+            "header_field/Accept".to_string()=> "Accept".to_string(),
+            "header_value/curl/7.81.0".to_string()=> "curl/7.81.0".to_string(),
+            "header_value/*/*".to_string()=> "*/*".to_string(),
+            "body".to_string()=> "username=cattchen".to_string(),
+            "header_field/Content-Type".to_string()=> "Content-Type".to_string(),
+            "on_message_complete".to_string()=> "on_message_complete".to_string(),
+            "header_field/Host".to_string()=> "Host".to_string()
+        };
+
+        for (key, value) in m {
+            assert!(tmp_store.0.get(&key).unwrap() == &value);
+        }
     }
 }

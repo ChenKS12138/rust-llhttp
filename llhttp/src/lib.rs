@@ -111,7 +111,7 @@ impl Settings {
 }
 
 /// llhttp parser
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Parser<'a, T> {
     _llhttp: ffi::llhttp_t,
     _settings: PhantomData<&'a Settings>,

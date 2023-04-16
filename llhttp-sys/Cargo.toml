@@ -1,6 +1,6 @@
 [package]
 name = "llhttp-sys"
-version = "0.0.1"
+version = "0.1.2"
 authors = ["Jack Liar", "cattchen"]
 description = "llhttp bindings for Rust"
 edition = "2018"

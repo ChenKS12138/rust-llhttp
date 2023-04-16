@@ -1,12 +1,12 @@
 [package]
 name = "llhttp"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Jack Liar", "cattchen"]
 edition = "2018"
 
 [dependencies]
 libc = "0.2"
-llhttp-sys = { version = "0.0.1", path = "../llhttp-sys" }
+llhttp-sys = { version = "0.1.2", path = "../llhttp-sys" }
 
 [dev-dependencies]
 anyhow="1.0.70"

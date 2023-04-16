@@ -33,6 +33,9 @@ fn build_llhttp(out_dir: &Path) -> Result<PathBuf> {
 
 #[cfg(feature = "gen_source")]
 fn generate_source(out_dir: &Path) -> Result<()> {
+    let source_dir = env::var("CARGO_MANIFEST_DIR")?;
+    let source_dir = Path::new(&source_dir);
+
     std::process::Command::new("git")
         .current_dir(".")
         .args(["submodule", "update"])
@@ -50,6 +53,24 @@ fn generate_source(out_dir: &Path) -> Result<()> {
     std::fs::copy("external/llhttp/src/native/http.c", out_dir.join("http.c"))?;
     std::fs::copy("external/llhttp/build/c/llhttp.c", out_dir.join("llhttp.c"))?;
     std::fs::copy("external/llhttp/build/llhttp.h", out_dir.join("llhttp.h"))?;
+
+    std::fs::copy(
+        "external/llhttp/src/native/api.c",
+        source_dir.join("src/api.c"),
+    )?;
+    std::fs::copy(
+        "external/llhttp/src/native/http.c",
+        source_dir.join("src/http.c"),
+    )?;
+    std::fs::copy(
+        "external/llhttp/build/c/llhttp.c",
+        source_dir.join("src/llhttp.c"),
+    )?;
+    std::fs::copy(
+        "external/llhttp/build/llhttp.h",
+        source_dir.join("src/llhttp.h"),
+    )?;
+
     Ok(())
 }
 
@@ -65,6 +86,9 @@ fn generate_source(out_dir: &Path) -> Result<()> {
 #[cfg(feature = "gen_binding")]
 fn generate_binding(inc_dir: &Path, out_dir: &Path) -> Result<()> {
     use anyhow::Error;
+    let source_dir = env::var("CARGO_MANIFEST_DIR")?;
+    let source_dir = Path::new(&source_dir);
+
     let out_file = out_dir.join("llhttp.rs");
     let inc_file = inc_dir.join("llhttp.h");
     let inc_file = inc_file.to_str().expect("header file");
@@ -103,8 +127,10 @@ fn generate_binding(inc_dir: &Path, out_dir: &Path) -> Result<()> {
         .newtype_enum("llhttp_method")
         .generate()
         .map_err(|_| Error::msg("generate binding files"))?
-        .write_to_file(out_file)
+        .write_to_file(&out_file)
         .with_context(|| "write wrapper")?;
+
+    std::fs::copy(&out_file, source_dir.join("src/llhttp.rs"))?;
 
     Ok(())
 }

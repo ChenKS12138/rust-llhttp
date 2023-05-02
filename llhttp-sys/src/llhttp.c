@@ -209,12 +209,15 @@ static const unsigned char llparse_blob57[] = {
   'U', 'B', 'S', 'C', 'R', 'I', 'B', 'E'
 };
 static const unsigned char llparse_blob58[] = {
-  'H', 'T', 'T', 'P', '/'
+  'T', 'T', 'P', '/'
 };
 static const unsigned char llparse_blob59[] = {
-  'A', 'D'
+  'T', 'S', 'P', '/'
 };
 static const unsigned char llparse_blob60[] = {
+  'A', 'D'
+};
+static const unsigned char llparse_blob61[] = {
   'T', 'P', '/'
 };
 
@@ -544,6 +547,8 @@ enum llparse_state_e {
   s_n_llhttp__internal__n_error_86,
   s_n_llhttp__internal__n_res_http_major,
   s_n_llhttp__internal__n_span_start_llhttp__on_version_1,
+  s_n_llhttp__internal__n_start_res_1,
+  s_n_llhttp__internal__n_start_res_2,
   s_n_llhttp__internal__n_start_res,
   s_n_llhttp__internal__n_invoke_llhttp__on_method_complete,
   s_n_llhttp__internal__n_req_or_res_method_2,
@@ -6301,14 +6306,14 @@ static llparse_state_t llhttp__internal__run(
       /* UNREACHABLE */;
       abort();
     }
-    case s_n_llhttp__internal__n_start_res:
-    s_n_llhttp__internal__n_start_res: {
+    case s_n_llhttp__internal__n_start_res_1:
+    s_n_llhttp__internal__n_start_res_1: {
       llparse_match_t match_seq;
       
       if (p == endp) {
-        return s_n_llhttp__internal__n_start_res;
+        return s_n_llhttp__internal__n_start_res_1;
       }
-      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob58, 5);
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob58, 4);
       p = match_seq.current;
       switch (match_seq.status) {
         case kMatchComplete: {
@@ -6316,9 +6321,54 @@ static llparse_state_t llhttp__internal__run(
           goto s_n_llhttp__internal__n_span_start_llhttp__on_version_1;
         }
         case kMatchPause: {
-          return s_n_llhttp__internal__n_start_res;
+          return s_n_llhttp__internal__n_start_res_1;
         }
         case kMatchMismatch: {
+          goto s_n_llhttp__internal__n_error_90;
+        }
+      }
+      /* UNREACHABLE */;
+      abort();
+    }
+    case s_n_llhttp__internal__n_start_res_2:
+    s_n_llhttp__internal__n_start_res_2: {
+      llparse_match_t match_seq;
+      
+      if (p == endp) {
+        return s_n_llhttp__internal__n_start_res_2;
+      }
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob59, 4);
+      p = match_seq.current;
+      switch (match_seq.status) {
+        case kMatchComplete: {
+          p++;
+          goto s_n_llhttp__internal__n_span_start_llhttp__on_version_1;
+        }
+        case kMatchPause: {
+          return s_n_llhttp__internal__n_start_res_2;
+        }
+        case kMatchMismatch: {
+          goto s_n_llhttp__internal__n_error_90;
+        }
+      }
+      /* UNREACHABLE */;
+      abort();
+    }
+    case s_n_llhttp__internal__n_start_res:
+    s_n_llhttp__internal__n_start_res: {
+      if (p == endp) {
+        return s_n_llhttp__internal__n_start_res;
+      }
+      switch (*p) {
+        case 'H': {
+          p++;
+          goto s_n_llhttp__internal__n_start_res_1;
+        }
+        case 'R': {
+          p++;
+          goto s_n_llhttp__internal__n_start_res_2;
+        }
+        default: {
           goto s_n_llhttp__internal__n_error_90;
         }
       }
@@ -6345,7 +6395,7 @@ static llparse_state_t llhttp__internal__run(
       if (p == endp) {
         return s_n_llhttp__internal__n_req_or_res_method_2;
       }
-      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob59, 2);
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob60, 2);
       p = match_seq.current;
       switch (match_seq.status) {
         case kMatchComplete: {
@@ -6379,7 +6429,7 @@ static llparse_state_t llhttp__internal__run(
       if (p == endp) {
         return s_n_llhttp__internal__n_req_or_res_method_3;
       }
-      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob60, 3);
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob61, 3);
       p = match_seq.current;
       switch (match_seq.status) {
         case kMatchComplete: {
@@ -9229,7 +9279,7 @@ static llparse_state_t llhttp__internal__run(
   }
   s_n_llhttp__internal__n_error_90: {
     state->error = 0x8;
-    state->reason = "Expected HTTP/";
+    state->reason = "Expected HTTP/ RTSP/";
     state->error_pos = (const char*) p;
     state->_current = (void*) (intptr_t) s_error;
     return s_error;
@@ -9644,12 +9694,15 @@ static const unsigned char llparse_blob58[] = {
   'U', 'B', 'S', 'C', 'R', 'I', 'B', 'E'
 };
 static const unsigned char llparse_blob59[] = {
-  'H', 'T', 'T', 'P', '/'
+  'T', 'T', 'P', '/'
 };
 static const unsigned char llparse_blob60[] = {
-  'A', 'D'
+  'T', 'S', 'P', '/'
 };
 static const unsigned char llparse_blob61[] = {
+  'A', 'D'
+};
+static const unsigned char llparse_blob62[] = {
   'T', 'P', '/'
 };
 
@@ -9975,6 +10028,8 @@ enum llparse_state_e {
   s_n_llhttp__internal__n_error_79,
   s_n_llhttp__internal__n_res_http_major,
   s_n_llhttp__internal__n_span_start_llhttp__on_version_1,
+  s_n_llhttp__internal__n_start_res_1,
+  s_n_llhttp__internal__n_start_res_2,
   s_n_llhttp__internal__n_start_res,
   s_n_llhttp__internal__n_invoke_llhttp__on_method_complete,
   s_n_llhttp__internal__n_req_or_res_method_2,
@@ -15542,14 +15597,14 @@ static llparse_state_t llhttp__internal__run(
       /* UNREACHABLE */;
       abort();
     }
-    case s_n_llhttp__internal__n_start_res:
-    s_n_llhttp__internal__n_start_res: {
+    case s_n_llhttp__internal__n_start_res_1:
+    s_n_llhttp__internal__n_start_res_1: {
       llparse_match_t match_seq;
       
       if (p == endp) {
-        return s_n_llhttp__internal__n_start_res;
+        return s_n_llhttp__internal__n_start_res_1;
       }
-      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob59, 5);
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob59, 4);
       p = match_seq.current;
       switch (match_seq.status) {
         case kMatchComplete: {
@@ -15557,9 +15612,54 @@ static llparse_state_t llhttp__internal__run(
           goto s_n_llhttp__internal__n_span_start_llhttp__on_version_1;
         }
         case kMatchPause: {
-          return s_n_llhttp__internal__n_start_res;
+          return s_n_llhttp__internal__n_start_res_1;
         }
         case kMatchMismatch: {
+          goto s_n_llhttp__internal__n_error_83;
+        }
+      }
+      /* UNREACHABLE */;
+      abort();
+    }
+    case s_n_llhttp__internal__n_start_res_2:
+    s_n_llhttp__internal__n_start_res_2: {
+      llparse_match_t match_seq;
+      
+      if (p == endp) {
+        return s_n_llhttp__internal__n_start_res_2;
+      }
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob60, 4);
+      p = match_seq.current;
+      switch (match_seq.status) {
+        case kMatchComplete: {
+          p++;
+          goto s_n_llhttp__internal__n_span_start_llhttp__on_version_1;
+        }
+        case kMatchPause: {
+          return s_n_llhttp__internal__n_start_res_2;
+        }
+        case kMatchMismatch: {
+          goto s_n_llhttp__internal__n_error_83;
+        }
+      }
+      /* UNREACHABLE */;
+      abort();
+    }
+    case s_n_llhttp__internal__n_start_res:
+    s_n_llhttp__internal__n_start_res: {
+      if (p == endp) {
+        return s_n_llhttp__internal__n_start_res;
+      }
+      switch (*p) {
+        case 'H': {
+          p++;
+          goto s_n_llhttp__internal__n_start_res_1;
+        }
+        case 'R': {
+          p++;
+          goto s_n_llhttp__internal__n_start_res_2;
+        }
+        default: {
           goto s_n_llhttp__internal__n_error_83;
         }
       }
@@ -15586,7 +15686,7 @@ static llparse_state_t llhttp__internal__run(
       if (p == endp) {
         return s_n_llhttp__internal__n_req_or_res_method_2;
       }
-      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob60, 2);
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob61, 2);
       p = match_seq.current;
       switch (match_seq.status) {
         case kMatchComplete: {
@@ -15620,7 +15720,7 @@ static llparse_state_t llhttp__internal__run(
       if (p == endp) {
         return s_n_llhttp__internal__n_req_or_res_method_3;
       }
-      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob61, 3);
+      match_seq = llparse__match_sequence_id(state, p, endp, llparse_blob62, 3);
       p = match_seq.current;
       switch (match_seq.status) {
         case kMatchComplete: {
@@ -18407,7 +18507,7 @@ static llparse_state_t llhttp__internal__run(
   }
   s_n_llhttp__internal__n_error_83: {
     state->error = 0x8;
-    state->reason = "Expected HTTP/";
+    state->reason = "Expected HTTP/ RTSP/";
     state->error_pos = (const char*) p;
     state->_current = (void*) (intptr_t) s_error;
     return s_error;

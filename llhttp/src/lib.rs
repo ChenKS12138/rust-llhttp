@@ -423,4 +423,38 @@ mod tests {
             assert!(tmp_store.0.get(&key).unwrap() == &value);
         }
     }
+
+    macro_rules! build_test {
+        ($fn_name:ident, $payload_type: expr, $payload: expr) => {
+            #[test]
+            fn $fn_name() {
+                let settings = Settings::new();
+
+                let payload = $payload;
+
+                let mut parser: Parser<TmpStore> = Parser::<TmpStore>::default();
+                parser.init(&settings, $payload_type);
+                parser.set_data(Some(Box::new(TmpStore::default())));
+                let ret = parser.parse(payload);
+
+                assert_eq!(ret, ffi::llhttp_errno::HPE_OK);
+            }
+        };
+    }
+
+    build_test!(
+        test_rstp_req,
+        Type::HTTP_REQUEST,
+        include_bytes!("data/info-req.bin")
+    );
+    build_test!(
+        test_rstp_resp,
+        Type::HTTP_RESPONSE,
+        include_bytes!("data/info-resp.bin")
+    );
+    build_test!(
+        test_rstp_setup_req,
+        Type::HTTP_REQUEST,
+        include_bytes!("data/setup-req.bin")
+    );
 }
